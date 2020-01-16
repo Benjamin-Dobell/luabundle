@@ -5,6 +5,4 @@ node_js:
 cache: yarn
 
 script:
-    - ./bin/run --version
-    - ./bin/run --help
     - yarn build
