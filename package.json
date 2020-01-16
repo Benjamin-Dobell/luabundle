@@ -1,0 +1,40 @@
+{
+	"name": "luabundle",
+	"description": "Bundles several Lua files into a single file.",
+	"version": "0.9.0",
+	"author": "Benjamin Dobell @Benjamin-Dobell",
+	"bugs": "https://github.com/Benjamin-Dobell/luabundle/issues",
+	"dependencies": {
+		"luaparse": "^0.2.1",
+		"tslib": "^1"
+	},
+	"devDependencies": {
+		"@types/luaparse": "^0.2.6",
+		"@types/node": "^13.1.6",
+		"eslint": "^6.8.0",
+		"typescript": "^3.3"
+	},
+	"engines": {
+		"node": ">=8.0.0"
+	},
+	"files": [
+		"/lib"
+	],
+	"homepage": "https://github.com/Benjamin-Dobell/luabundle",
+	"keywords": [
+		"lua",
+		"require",
+		"modules",
+		"bundler",
+		"bundling"
+	],
+	"license": "MIT",
+	"main": "lib/index.js",
+	"repository": "Benjamin-Dobell/luabundle",
+	"scripts": {
+		"build": "rm -rf lib && tsc -b && cp src/bundle/runtime.lua ./lib/bundle",
+		"posttest": "eslint . --ext .ts --config .eslintrc",
+		"test": "echo NO TESTS"
+	},
+	"types": "lib/index.d.ts"
+}
