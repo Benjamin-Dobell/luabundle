@@ -11,17 +11,19 @@ import {Options, RealizedOptions} from './options'
 
 import {
 	ModuleMap,
-	NonLiteralRequire,
 	processModule,
 } from './module'
 
-const defaultOptions: Options = {
+const defaultOptions: RealizedOptions = {
+	force: false,
 	identifiers: {
 		register: '__bundle_register',
 		require: '__bundle_require',
 		loaded: '__bundle_loaded',
 		modules: '__bundle_modules',
 	},
+	isolate: false,
+	luaVersion: '5.3',
 	paths: ['?', '?.lua'],
 	rootModuleName: '__root',
 }
@@ -42,6 +44,31 @@ function bundleModule(name: string, content: string, options: RealizedOptions) {
 	return `${options.identifiers.register}("${name}", function(_ENV)\n${postprocessedContent}\nend)\n`
 }
 
+export function bundleString(lua: string, options: Options = {}): string {
+	const realizedOptions = mergeOptions(options)
+	const bundledModules: ModuleMap = {}
+
+	processModule(realizedOptions.rootModuleName, lua, realizedOptions, bundledModules)
+
+	if (Object.keys(bundledModules).length === 1 && !options.force) {
+		return lua
+	}
+
+	const identifiers = realizedOptions.identifiers
+	const runtime = readFileSync(resolvePath(__dirname, './runtime.lua'))
+
+	let bundle = options.isolate ? 'local require = nil\n' : ''
+	bundle += `local ${identifiers.register}, ${identifiers.require}, ${identifiers.modules}, ${identifiers.loaded} = ${runtime}`
+
+	for (const [name, bundledModule] of Object.entries(bundledModules)) {
+		bundle += bundleModule(name, bundledModule.content!, realizedOptions)
+	}
+
+	bundle += 'return ' + identifiers.require + '("' + realizedOptions.rootModuleName + '")'
+
+	return bundle
+}
+
 export function bundle(inputFilePath: string, options: Options = {}): string {
 	if (!existsSync(inputFilePath)) {
 		throw new Error(inputFilePath + ' could not be found')
@@ -51,32 +78,6 @@ export function bundle(inputFilePath: string, options: Options = {}): string {
 		throw new Error(inputFilePath + ' is not a file')
 	}
 
-	const realizedOptions = mergeOptions(options)
-
-	const bundledModules: ModuleMap = {}
-	const nonLiteralsRequires: NonLiteralRequire[] = []
-
-	processModule(realizedOptions.rootModuleName, inputFilePath, realizedOptions, bundledModules, nonLiteralsRequires)
-
-	for (const nonLiteralRequire of nonLiteralsRequires) {
-		const fileContents = readFileSync(nonLiteralRequire.filePath, 'utf8')
-		const start = (nonLiteralRequire.expression as any).range[0]
-		const prefix = fileContents.slice(0, start)
-		const lineNumber = prefix.match(/\n/g)!.length + 1
-		const lineCharacterIndex = prefix.lastIndexOf('\n') + 1
-		console.warn(`WARNING: Non-literal found in ${inputFilePath} at ${lineNumber}:${start - lineCharacterIndex + 1}`)
-	}
-
-	const identifiers = realizedOptions.identifiers
-	const runtime = readFileSync(resolvePath(__dirname, './runtime.lua'))
-
-	let bundleContent = `local ${identifiers.register}, ${identifiers.require}, ${identifiers.modules}, ${identifiers.loaded} = ${runtime}`
-
-	for (const [name, bundledModule] of Object.entries(bundledModules)) {
-		bundleContent += bundleModule(name, bundledModule.content!, realizedOptions)
-	}
-
-	bundleContent += 'return ' + identifiers.require + '("' + realizedOptions.rootModuleName + '")'
-
-	return bundleContent
+	const lua = readFileSync(inputFilePath, 'utf8')
+	return bundleString(lua, options)
 }

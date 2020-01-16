@@ -12,11 +12,8 @@ import {
 } from 'luaparse'
 import {RealizedOptions} from './options'
 
-export type RequireExpression = CallExpression | StringCallExpression
-
 export type Module = {
 	name: string,
-	resolvedPath: string,
 	content?: string,
 }
 
@@ -24,9 +21,11 @@ export type ModuleMap = {
 	[name: string]: Module,
 }
 
-export type NonLiteralRequire = {
-	expression: RequireExpression,
-	filePath: string,
+type RequireExpression = CallExpression | StringCallExpression
+
+type ResolvedModule = {
+	name: string,
+	resolvedPath: string,
 }
 
 const traverseRequires = (node: Node, callback: (expression: RequireExpression) => void) => {
@@ -61,52 +60,72 @@ function resolveModule(name: string, packagePaths: readonly string[]) {
 	return null
 }
 
-export function processModule(name: string, filePath: string, options: RealizedOptions, processedModules: ModuleMap, nonLiterals: NonLiteralRequire[]): void {
-	const originalContent = readFileSync(filePath, 'utf8')
-	const preprocessedContent = options.preprocess ? options.preprocess(name, originalContent, options) : originalContent
-
+export function processModule(name: string, lua: string, options: RealizedOptions, processedModules: ModuleMap): void {
 	const bundleRequire = options.identifiers.require
-	const ast = parseLua(preprocessedContent, {ranges: true})
-	const discoveredModules: Module[] = []
+	const resolvedModules: ResolvedModule[] = []
+
+	const preprocessedContent = options.preprocess ? options.preprocess(name, lua, options) : lua
+	const ast = parseLua(preprocessedContent, {
+		locations: true,
+		luaVersion: options.luaVersion,
+		ranges: true,
+	})
 
 	let processedContent = preprocessedContent
 
 	traverseRequires(ast, expression => {
 		const argument = (expression as StringCallExpression).argument || (expression as CallExpression).arguments[0]
 
-		if (argument.type === 'StringLiteral') {
-			const requiredName = argument.value
-			const resolvedPath = resolveModule(requiredName, options.paths)
+		let required = null
 
-			if (!resolvedPath) {
-				throw new Error(`Could not resolve ${requiredName} required by ${filePath}`)
-			}
+		if (argument.type == 'StringLiteral') {
+			required = argument.value
+		} else if (options.expressionHandler) {
+			required = options.expressionHandler(name, argument)
+		}
 
-			if (!processedModules[requiredName]) {
-				discoveredModules.push({
-					name: requiredName,
+		if (required) {
+			const requiredModuleNames: string[] = Array.isArray(required) ? required : [required]
+
+			for (const requiredModule of requiredModuleNames) {
+				const resolvedPath = resolveModule(requiredModule, options.paths)
+
+				if (!resolvedPath) {
+					const start = expression.loc?.start!!
+					throw new Error(`Could not resolve module '${requiredModule}' required by '${name}' at ${start.line}:${start.column}`)
+				}
+
+				resolvedModules.push({
+					name: requiredModule,
 					resolvedPath,
 				})
 			}
 
-			processedContent = processedContent.slice(0, (expression as any).range[0]) + bundleRequire + '("' + requiredName + '")' + processedContent.slice((expression as any).range[1])
-		} else {
-			processedContent = processedContent.slice(0, (expression.base as any).range[0]) + bundleRequire + processedContent.slice((expression.base as any).range[1])
+			if (typeof required === "string") {
+				const range: [number, number] = (expression as any).range
+				processedContent = processedContent.slice(0, range[0]) + bundleRequire + '("' + required + '")' + processedContent.slice(range[1])
+			} else {
+				required = null
+			}
+		}
 
-			nonLiterals.push({
-				expression,
-				filePath,
-			})
+		if (!required) {
+			const range: [number, number] = (expression.base as any).range
+			processedContent = processedContent.slice(0, range[0]) + bundleRequire + processedContent.slice(range[1])
 		}
 	})
 
 	processedModules[name] = {
 		name,
-		resolvedPath: filePath,
 		content: processedContent,
 	}
 
-	for (const module of discoveredModules) {
-		processModule(module.name, module.resolvedPath, options, processedModules, nonLiterals)
+	for (const module of resolvedModules) {
+		if (processedModules[module.name]) {
+			continue
+		}
+
+		const moduleLua = readFileSync(module.resolvedPath, 'utf8')
+		processModule(module.name, moduleLua, options, processedModules)
 	}
 }
