@@ -1,4 +1,7 @@
 {
+	"parserOptions": {
+		"ecmaVersion": 2017
+	},
 	"rules": {
 		"indent": [
 			"error",
@@ -8,19 +11,26 @@
 		"operator-linebreak": [
 			"error",
 			"before"
-		],
-		"@typescript-eslint/member-delimiter-style": [
-			"error",
-			{
-				"singleline": {
-					"delimiter": "comma",
-					"requireLast": false
-				},
-				"multiline": {
-					"delimiter": "comma",
-					"requireLast": true
-				}
-			}
 		]
-	}
+	},
+	"overrides": [
+		{
+			"files": ["**/*.ts"],
+			"rules": {
+				"@typescript-eslint/member-delimiter-style": [
+					"error",
+					{
+						"singleline": {
+							"delimiter": "comma",
+							"requireLast": false
+						},
+						"multiline": {
+							"delimiter": "comma",
+							"requireLast": true
+						}
+					}
+				]
+			}
+		}
+	]
 }
