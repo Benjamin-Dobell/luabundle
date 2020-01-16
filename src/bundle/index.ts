@@ -76,7 +76,7 @@ export function bundle(inputFilePath: string, options: Options = {}): string {
 		bundleContent += bundleModule(name, bundledModule.content!, realizedOptions)
 	}
 
-	bundleContent += 'return ' + identifiers.require + '("' + options.rootModuleName + '")'
+	bundleContent += 'return ' + identifiers.require + '("' + realizedOptions.rootModuleName + '")'
 
 	return bundleContent
 }
