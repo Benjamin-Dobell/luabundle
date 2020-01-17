@@ -1,5 +1,6 @@
 import {
-	existsSync, lstatSync,
+	existsSync,
+	lstatSync,
 	readFileSync,
 } from 'fs'
 
@@ -10,6 +11,7 @@ import {
 import {Options, RealizedOptions} from './options'
 
 import {
+	Module,
 	ModuleMap,
 	processModule,
 } from './module'
@@ -39,18 +41,21 @@ function mergeOptions(options: Options): RealizedOptions {
 	}
 }
 
-function bundleModule(name: string, content: string, options: RealizedOptions) {
-	const postprocessedContent = options.postprocess ? options.postprocess(name, content, options) : content
+function bundleModule(module: Module, options: RealizedOptions) {
+	const postprocessedContent = options.postprocess ? options.postprocess(module, options) : module.content
 	return `${options.identifiers.register}("${name}", function(_ENV)\n${postprocessedContent}\nend)\n`
 }
 
 export function bundleString(lua: string, options: Options = {}): string {
 	const realizedOptions = mergeOptions(options)
-	const bundledModules: ModuleMap = {}
+	const processedModules: ModuleMap = {}
 
-	processModule(realizedOptions.rootModuleName, lua, realizedOptions, bundledModules)
+	processModule({
+		name: realizedOptions.rootModuleName,
+		content: lua,
+	}, realizedOptions, processedModules)
 
-	if (Object.keys(bundledModules).length === 1 && !options.force) {
+	if (Object.keys(processedModules).length === 1 && !options.force) {
 		return lua
 	}
 
@@ -60,8 +65,11 @@ export function bundleString(lua: string, options: Options = {}): string {
 	let bundle = options.isolate ? 'local require = nil\n' : ''
 	bundle += `local ${identifiers.register}, ${identifiers.require}, ${identifiers.modules}, ${identifiers.loaded} = ${runtime}`
 
-	for (const [name, bundledModule] of Object.entries(bundledModules)) {
-		bundle += bundleModule(name, bundledModule.content!, realizedOptions)
+	for (const [name, processedModule] of Object.entries(processedModules)) {
+		bundle += bundleModule({
+			name,
+			content: processedModule.content!
+		}, realizedOptions)
 	}
 
 	bundle += 'return ' + identifiers.require + '("' + realizedOptions.rootModuleName + '")'

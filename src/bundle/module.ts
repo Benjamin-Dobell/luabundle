@@ -14,7 +14,8 @@ import {RealizedOptions} from './options'
 
 export type Module = {
 	name: string,
-	content?: string,
+	resolvedPath?: string,
+	content: string,
 }
 
 export type ModuleMap = {
@@ -49,7 +50,7 @@ const traverseRequires = (node: Node, callback: (expression: RequireExpression) 
 	}
 }
 
-function resolveModule(name: string, packagePaths: readonly string[]) {
+export function resolveModule(name: string, packagePaths: readonly string[]) {
 	for (const pattern of packagePaths) {
 		const path = pattern.replace(/\?/g, name)
 
@@ -60,11 +61,11 @@ function resolveModule(name: string, packagePaths: readonly string[]) {
 	return null
 }
 
-export function processModule(name: string, lua: string, options: RealizedOptions, processedModules: ModuleMap): void {
+export function processModule(module: Module, options: RealizedOptions, processedModules: ModuleMap): void {
 	const bundleRequire = options.identifiers.require
 	const resolvedModules: ResolvedModule[] = []
 
-	const preprocessedContent = options.preprocess ? options.preprocess(name, lua, options) : lua
+	const preprocessedContent = options.preprocess ? options.preprocess(module, options) : module.content
 	const ast = parseLua(preprocessedContent, {
 		locations: true,
 		luaVersion: options.luaVersion,
@@ -116,7 +117,7 @@ export function processModule(name: string, lua: string, options: RealizedOption
 	})
 
 	processedModules[name] = {
-		name,
+		...module,
 		content: processedContent,
 	}
 
@@ -125,7 +126,10 @@ export function processModule(name: string, lua: string, options: RealizedOption
 			continue
 		}
 
-		const moduleLua = readFileSync(module.resolvedPath, 'utf8')
-		processModule(module.name, moduleLua, options, processedModules)
+		const moduleContent = readFileSync(module.resolvedPath, 'utf8')
+		processModule({
+			...module,
+			content: moduleContent
+		}, options, processedModules)
 	}
 }
