@@ -55,11 +55,21 @@ Loads all modules `require()`d in the provided Lua string, and returns the resul
 | **isolate** | `boolean` | `false` | By default, the bundle is not isolated i.e. at runtime we'll try fallback to regular `require()` for modules not included in the bundle. |
 | **luaVersion** | `"5.1" | "5.2" | "5.3" | "LuaJIT"` | `"5.3"` |
 | **paths** | `string[]` | `['?', '?.lua']` | See [Search Paths](#search-paths) |
-| **postprocess** | `(name: string, contents: string, options: RealizedOptions) => string` | `undefined` | Postprocess a module, immediately before its added to the bundle.  |
-| **preprocess** | `(name: string, contents: string, options: RealizedOptions) => string` | `undefined` | Preprocess a module, before luabundle makes any of its own modifications.  |
+| **postprocess** | `(module: Module, options: RealizedOptions) => string` | `undefined` | Postprocess a module, immediately before its added to the bundle.  |
+| **preprocess** | `(module: Module, options: RealizedOptions) => string` | `undefined` | Preprocess a module, before luabundle makes any of its own modifications.  |
 | **rootModuleName** | `string` | `"__root"` | The contents of `inputFilePath` are interpreted as module with this name.  |
 
-_**NOTE:** `RealizedOptions` refers to `Options` after all default values have been merged i.e. `identifiers` is guaranteed to exist etc._
+_`RealizedOptions` refers to `Options` after all default values have been merged i.e. `identifiers` is guaranteed to exist etc._
+
+`Module` refers to an object of the form:
+
+```typescript
+type Module = {
+	name: string,
+	resolvedPath?: string,
+	content: string,
+}
+```
 
 ### Search Paths
 
@@ -74,10 +84,12 @@ The default behaviour (`paths` option omitted) is to resolve module names relati
 ### Expression Handler
 
 ```typescript
-type ExpressionHandler = (module: string, expression: Expression) => string | string[] | null | undefined | void
+type ExpressionHandler = (module: Module, expression: Expression) => string | string[] | null | undefined | void
 ```
 
 _`Expression` is a [luaparse](https://github.com/fstirlitz/luaparse) expression._
+
+_`Module` is as described [above](#options).
 
 By default, luabundle can only resolve string literal requires. When a `require()` call is encountered that's some other expression e.g.
 
@@ -101,7 +113,7 @@ import bundle from 'luabundle'
 const bundledLua = bundle('./file.lua', {
     expressionHandler: (module, expression) => {
         const start = expression.loc.start
-        console.warn(`WARNING: Non-literal require found in '${module}' at ${start.line}:${start.column}`)
+        console.warn(`WARNING: Non-literal require found in '${module.name}' at ${start.line}:${start.column}`)
     },
 })
 ```

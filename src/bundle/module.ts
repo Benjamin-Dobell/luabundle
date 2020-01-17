@@ -82,7 +82,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 		if (argument.type == 'StringLiteral') {
 			required = argument.value
 		} else if (options.expressionHandler) {
-			required = options.expressionHandler(name, argument)
+			required = options.expressionHandler(module, argument)
 		}
 
 		if (required) {
@@ -93,7 +93,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 
 				if (!resolvedPath) {
 					const start = expression.loc?.start!!
-					throw new Error(`Could not resolve module '${requiredModule}' required by '${name}' at ${start.line}:${start.column}`)
+					throw new Error(`Could not resolve module '${requiredModule}' required by '${module.name}' at ${start.line}:${start.column}`)
 				}
 
 				resolvedModules.push({
@@ -116,7 +116,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 		}
 	})
 
-	processedModules[name] = {
+	processedModules[module.name] = {
 		...module,
 		content: processedContent,
 	}

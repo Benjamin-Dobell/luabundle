@@ -43,7 +43,7 @@ function mergeOptions(options: Options): RealizedOptions {
 
 function bundleModule(module: Module, options: RealizedOptions) {
 	const postprocessedContent = options.postprocess ? options.postprocess(module, options) : module.content
-	return `${options.identifiers.register}("${name}", function(_ENV)\n${postprocessedContent}\nend)\n`
+	return `${options.identifiers.register}("${module.name}", function(_ENV)\n${postprocessedContent}\nend)\n`
 }
 
 export function bundleString(lua: string, options: Options = {}): string {

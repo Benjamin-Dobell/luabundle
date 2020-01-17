@@ -24,7 +24,7 @@ type Identifiers = {
 	modules: string,
 }
 
-export type ExpressionHandler = (module: string, expression: Expression) => string | string[] | null | undefined | void
+export type ExpressionHandler = (module: Module, expression: Expression) => string | string[] | null | undefined | void
 export type Process = (module: Module, options: RealizedOptions) => string
 
 export type RealizedOptions = RecursiveReadonly<{
