@@ -12,8 +12,8 @@
 		"declarationMap": true,                   /* Generates a sourcemap for each corresponding '.d.ts' file. */
 		// "sourceMap": true,                     /* Generates corresponding '.map' file. */
 		// "outFile": "./",                       /* Concatenate and emit output to single file. */
-		"outDir": "lib",                          /* Redirect output structure to the directory. */
-		"rootDir": "./src",                       /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
+		"outDir": "dist",                         /* Redirect output structure to the directory. */
+		"rootDir": ".",                           /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
 		// "composite": true,                     /* Enable project compilation */
 		// "tsBuildInfoFile": "./",               /* Specify file to store incremental compilation information */
 		// "removeComments": true,                /* Do not emit comments to output. */
@@ -63,6 +63,11 @@
 		// "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
 
 		/* Advanced Options */
-		"forceConsistentCasingInFileNames": true  /* Disallow inconsistently-cased references to the same file. */
-	}
+		"forceConsistentCasingInFileNames": true, /* Disallow inconsistently-cased references to the same file. */
+		"resolveJsonModule": true
+	},
+	"include": [
+		"src/**/*.ts",
+		"package.json"
+	]
 }

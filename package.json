@@ -12,14 +12,13 @@
 		"@types/luaparse": "^0.2.6",
 		"@types/node": "^13.1.6",
 		"eslint": "^6.8.0",
+		"fs-extra": "^8.1.0",
+		"rimraf": "^3.0.0",
 		"typescript": "^3.3"
 	},
 	"engines": {
 		"node": ">=8.0.0"
 	},
-	"files": [
-		"/lib"
-	],
 	"homepage": "https://github.com/Benjamin-Dobell/luabundle",
 	"keywords": [
 		"lua",
@@ -29,13 +28,13 @@
 		"bundling"
 	],
 	"license": "MIT",
-	"main": "lib/index.js",
+	"main": "index.js",
 	"repository": "Benjamin-Dobell/luabundle",
 	"scripts": {
-		"build": "rm -rf lib && tsc -b && node ./tools/prepack.js",
-		"prepack": "rm -rf lib && tsc -b && node ./tools/prepack.js",
+		"build": "node scripts/build.js",
+		"prepack": "node scripts/prepack.js",
 		"posttest": "eslint . --config .eslintrc",
 		"test": "echo NO TESTS"
 	},
-	"types": "lib/index.d.ts"
+	"types": "index.d.ts"
 }
