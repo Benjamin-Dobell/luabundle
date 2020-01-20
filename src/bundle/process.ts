@@ -10,44 +10,16 @@ import {
 	parse as parseLua,
 	StringCallExpression,
 } from 'luaparse'
+
+import {Module, ModuleMap} from '../common/module'
+
+import {reverseTraverseRequires} from '../ast'
+
 import {RealizedOptions} from './options'
-
-export type Module = {
-	name: string,
-	resolvedPath?: string,
-	content: string,
-}
-
-export type ModuleMap = {
-	[name: string]: Module,
-}
-
-type RequireExpression = CallExpression | StringCallExpression
 
 type ResolvedModule = {
 	name: string,
 	resolvedPath: string,
-}
-
-const traverseRequires = (node: Node, callback: (expression: RequireExpression) => void) => {
-	const anyNode = node as any
-	const children = anyNode.body
-		|| anyNode.clauses
-		|| anyNode.init
-		|| (anyNode.expression ? [anyNode.expression] : [])
-
-	for (let i = children.length - 1; i >= 0; i--) {
-		traverseRequires(children[i], callback)
-	}
-
-	if (node.type === 'CallExpression' || node.type === 'StringCallExpression') {
-		const callExpression = node as RequireExpression
-		if (callExpression.base.type === 'Identifier'
-			&& callExpression.base.name === 'require'
-			&& ((callExpression as StringCallExpression).argument || (callExpression as CallExpression).arguments?.length === 1)) {
-			callback(callExpression)
-		}
-	}
 }
 
 export function resolveModule(name: string, packagePaths: readonly string[]) {
@@ -74,7 +46,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 
 	let processedContent = preprocessedContent
 
-	traverseRequires(ast, expression => {
+	reverseTraverseRequires(ast, "require", expression => {
 		const argument = (expression as StringCallExpression).argument || (expression as CallExpression).arguments[0]
 
 		let required = null

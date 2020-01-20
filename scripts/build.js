@@ -11,6 +11,14 @@ const {dist, root} = require('./utils/paths')
 
 rimraf.sync(dist('*'), {glob: {dot: true}})
 
+if (fs.existsSync(root('gen'))) {
+	rimraf.sync(root('gen/*'), {glob: {dot: true}})
+} else {
+	fs.mkdirSync(root('gen'))
+}
+
+fs.copySync(root('package.json'), root('gen/package.json'))
+
 process.chdir(root())
 
 const sourceRegex = new RegExp(`(sources":\\[")(?:\\.\\.${path.sep}\\.\\.${path.sep})((?:\\.\\.\\${path.sep})*src)`)
@@ -32,6 +40,7 @@ spawn(tsc, ['-b'], { stdio: 'inherit' }).on('exit', code => {
 		process.exit(code)
 	}
 
+	rimraf.sync(dist('gen'))
 
 	relocateJs()
 

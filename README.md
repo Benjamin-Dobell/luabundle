@@ -32,20 +32,24 @@ npm install --save luabundle
 import bundle from 'luabundle'
 
 const bundledLua = bundle('./file.lua')
-// `bundledLua` now contains valid Lua which can be written straight to disk, stdout etc. 
+// `bundledLua` now contains valid Lua which can be written straight to disk, stdout etc.
 ```
 
 If you're using TypeScript, TS definitions are available by default.
 
-## bundle(inputFilePath: string, options: Options) => string
+# Bundling
+
+In order to create a bundle, and referenced files will be loaded from disk. However, the root module (entry-point Lua) may be provided either as a file path (`bundle`), or as a string (`bundleString`).
+
+## bundle(inputFilePath: string, options: BundleOptions) => string
 
 Reads a Lua file, all recursively `require()`d modules, and returns the resultant bundle as a string.
 
-## bundleString(lua: string, options: Options) => string
+## bundleString(lua: string, options: BundleOptions) => string
 
 Loads all modules `require()`d in the provided Lua string, and returns the resultant bundle as a string.
 
-## Options
+## Bundle Options
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
@@ -53,13 +57,14 @@ Loads all modules `require()`d in the provided Lua string, and returns the resul
 | **force** | `boolean` | `false` | Whether the provided Lua should always be returned as a bundle, even when it required no other modules. |
 | **identifiers** | `Identifiers` | See [Identifiers](#identifiers) | """ |
 | **isolate** | `boolean` | `false` | By default, the bundle is not isolated i.e. at runtime we'll try fallback to regular `require()` for modules not included in the bundle. |
-| **luaVersion** | `"5.1" | "5.2" | "5.3" | "LuaJIT"` | `"5.3"` |
+| **luaVersion** | `"5.1" \| "5.2" \| "5.3" \| "LuaJIT"` | `"5.3"` |
+| **metadata** | `boolean` | `true` | Unless set to `false`, the bundle will be encoded with metadata (Lua comments) that describe the specification of the bundle. Unbundling is only possible for bundles that are bundled with metadata. |
 | **paths** | `string[]` | `['?', '?.lua']` | See [Search Paths](#search-paths) |
 | **postprocess** | `(module: Module, options: RealizedOptions) => string` | `undefined` | Postprocess a module, immediately before its added to the bundle.  |
 | **preprocess** | `(module: Module, options: RealizedOptions) => string` | `undefined` | Preprocess a module, before luabundle makes any of its own modifications.  |
 | **rootModuleName** | `string` | `"__root"` | The contents of `inputFilePath` are interpreted as module with this name.  |
 
-_`RealizedOptions` refers to `Options` after all default values have been merged i.e. `identifiers` is guaranteed to exist etc._
+`RealizedOptions` refers to these `Options` after all default values have been merged i.e. `identifiers` is guaranteed to exist etc.
 
 `Module` refers to an object of the form:
 
@@ -87,9 +92,9 @@ The default behaviour (`paths` option omitted) is to resolve module names relati
 type ExpressionHandler = (module: Module, expression: Expression) => string | string[] | null | undefined | void
 ```
 
-_`Expression` is a [luaparse](https://github.com/fstirlitz/luaparse) expression._
+`Expression` is a [luaparse](https://github.com/fstirlitz/luaparse) expression.
 
-_`Module` is as described [above](#options).
+`Module` is as described [above](#bundle-options).
 
 By default, luabundle can only resolve string literal requires. When a `require()` call is encountered that's some other expression e.g.
 
@@ -157,3 +162,67 @@ If at runtime you want to get a list of all modules included in the bundle, you 
 | **require** | `"__bundle_require"` |
 | **modules** | `"__bundle_modules"` |
 | **loaded** | `"__bundle_loaded"` |
+
+# Unbundling
+
+If a bundle was generated with metadata (default), then luabundle is also able to unbundle it. If an attempt is made to unbundle a file that does not contain bundle metadata, an error will be thrown.
+
+Because Lua (and luabundle) utilise [Search Paths](#search-paths) when creating the bundle, modules could have come from many different locations. This information is intentionally _not_ encoded in the bundle, thus whilst we'll output a valid module directory structure, it may not match the original.
+
+## unbundle(inputFilePath: string, options: Options) => UnbundledData
+
+Reads a bundle file, and returns all modules contained within, unless the `rootOnly` is `true`, in which case other modules will be ignored.
+
+## unbundleString(lua: string, options: Options) => UnbundledData
+
+Returns all modules contained within the specified Lua string, unless the `rootOnly` is `true`, in which case other modules will be ignored.
+
+## Unbundled Data
+
+```typescript
+type UnbundledData = {
+	metadata: Metadata,
+	modules: ModuleMap,
+}
+
+type ModuleMap = {
+	[name: string]: Module,
+}
+
+export type Metadata = Pick<BundleOptions, 'identifiers' | 'luaVersion' | 'rootModuleName'> & {
+	version: string
+}
+```
+
+`Metadata` is essentially a subset of the `BundleOptions` used to create a bundle, as well as `version` of luabundle used to generate the bundle.
+
+`Module` is as described [above](#bundle-options).
+
+## Unbundle Options
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| **postprocess** | `(module: Module, metadata: RealizedMetadata, options: RealizedOptions) => string | false | null | undefined | void` | Postprocess a module. Returning a `string` will replace the module contents. Returning `false` or `null` will reject the module i.e. it won't be added to the module map. |
+| **preprocess** | `(module: Module, metadata: RealizedMetadata, options: RealizedOptions) => string | undefined` | Preprocess a module, before luabundle makes any of its own modifications. Returning a `string` will replace the module contents. Returning `false` or `null` will reject the module i.e. it won't be added to the module map. |
+| **rootOnly** | `boolean` | `false` | When set to `true`, only the root module of the bundle will be processed and returned. |
+
+`RealizedOptions` refers to these `Options` after all default values have been merged i.e. `identifiers` is guaranteed to exist etc.
+
+`Module` is the same type encountered when [bundling](#bundle-options).
+
+`RealizedMetadata` is as follows:
+
+### Metadata
+
+Unless disabled when bundling, bundles are generated with some metadata that is necessary to unbundle.
+
+With the exception of `version`, these values/types correspond with the types described [#bundle-options](above). `version` is simply the version of luabundle that generated the bundle.
+
+```typescript
+type RealizedMetadata = {
+	identifiers: Identifiers,
+	luaVersion: string,
+    rootModuleName: string,
+	version: string,
+}
+```

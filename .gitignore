@@ -3,5 +3,6 @@
 *-debug.log
 *-error.log
 /dist
+/gen
 /tmp
 node_modules

@@ -1,28 +1,8 @@
-import {
-	Expression,
-	Options as LuaparseOptions,
-} from 'luaparse'
+import {Expression} from 'luaparse'
 
-import {Module} from './module'
-
-type RecursivePartial<T> = T extends Function ? T : Partial<{
-	[k in keyof T]: T[k] extends Function ? T[k] : RecursivePartial<T[k]>
-}>
-
-type RecursiveReadonly<T> = T extends Function ? T : {
-	readonly [k in keyof T]: RecursiveReadonly<T[k]>
-}
-
-type RecursiveMutable<T> = T extends Function ? T : {
-	-readonly [k in keyof T]: RecursiveReadonly<T[k]>
-}
-
-type Identifiers = {
-	register: string,
-	require: string,
-	loaded: string,
-	modules: string,
-}
+import {Module} from '../common/module'
+import {Identifiers, LuaVersion} from '../common/options'
+import {RecursiveMutable, RecursivePartial, RecursiveReadonly} from '../common/utility'
 
 export type ExpressionHandler = (module: Module, expression: Expression) => string | string[] | null | undefined | void
 export type Process = (module: Module, options: RealizedOptions) => string
@@ -32,11 +12,27 @@ export type RealizedOptions = RecursiveReadonly<{
 	force: boolean,
 	identifiers: Identifiers,
 	isolate: boolean,
-	luaVersion: LuaparseOptions['luaVersion'],
-	paths: string[],
+	luaVersion: LuaVersion,
+	metadata: boolean,
+	paths: readonly string[],
 	postprocess?: Process,
 	preprocess?: Process,
 	rootModuleName: string,
 }>
 
 export type Options = RecursiveMutable<RecursivePartial<RealizedOptions>>
+
+export const defaultOptions: RealizedOptions = {
+	force: false,
+	identifiers: {
+		register: '__bundle_register',
+		require: '__bundle_require',
+		loaded: '__bundle_loaded',
+		modules: '__bundle_modules',
+	},
+	isolate: false,
+	luaVersion: '5.3',
+	metadata: true,
+	paths: ['?', '?.lua'],
+	rootModuleName: '__root',
+} as const

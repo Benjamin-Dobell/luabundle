@@ -8,37 +8,27 @@ import {
 	resolve as resolvePath,
 } from 'path'
 
-import {Options, RealizedOptions} from './options'
-
 import {
 	Module,
 	ModuleMap,
-	processModule,
-} from './module'
+} from '../common/module'
 
-const defaultOptions: RealizedOptions = {
-	force: false,
-	identifiers: {
-		register: '__bundle_register',
-		require: '__bundle_require',
-		loaded: '__bundle_loaded',
-		modules: '__bundle_modules',
-	},
-	isolate: false,
-	luaVersion: '5.3',
-	paths: ['?', '?.lua'],
-	rootModuleName: '__root',
-}
+import {defaultOptions, Options, RealizedOptions} from './options'
+
+import {
+	processModule,
+} from './process'
+import {generateMetadata} from '../metadata'
 
 function mergeOptions(options: Options): RealizedOptions {
 	return {
 		...defaultOptions,
-		...(options as RealizedOptions),
+		...options,
 		identifiers: {
 			...defaultOptions.identifiers,
-			...(options as RealizedOptions).identifiers,
+			...options.identifiers,
 		}
-	}
+	} as RealizedOptions
 }
 
 function bundleModule(module: Module, options: RealizedOptions) {
@@ -55,14 +45,22 @@ export function bundleString(lua: string, options: Options = {}): string {
 		content: lua,
 	}, realizedOptions, processedModules)
 
-	if (Object.keys(processedModules).length === 1 && !options.force) {
+	if (Object.keys(processedModules).length === 1 && !realizedOptions.force) {
 		return lua
 	}
 
 	const identifiers = realizedOptions.identifiers
 	const runtime = readFileSync(resolvePath(__dirname, './runtime.lua'))
 
-	let bundle = options.isolate ? 'local require = nil\n' : ''
+	let bundle = ''
+
+	if (realizedOptions.metadata) {
+		bundle += generateMetadata(realizedOptions)
+	}
+
+	if (realizedOptions.isolate) {
+		bundle += 'local require = nil\n'
+	}
 	bundle += `local ${identifiers.register}, ${identifiers.require}, ${identifiers.modules}, ${identifiers.loaded} = ${runtime}`
 
 	for (const [name, processedModule] of Object.entries(processedModules)) {
