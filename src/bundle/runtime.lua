@@ -5,14 +5,6 @@
 	local modules = {}
 	local loaded = {}
 
-	local function copyTable(tab)
-		local copied = {}
-		for k, v in pairs(tab) do
-			copied[k] = v
-		end
-		return copied
-	end
-
 	local function register(name, body)
 		if not modules[name] then
 			modules[name] = body
@@ -36,8 +28,7 @@
 			end
 
 			loaded[name] = loadingPlaceholder
-			loadedModule = modules[name](copyTable(_ENV))
-			loaded[name] = loadedModule
+			loaded[name] = modules[name]()
 		end
 
 		return loadedModule
