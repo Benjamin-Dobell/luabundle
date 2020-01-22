@@ -4,20 +4,23 @@ import {Chunk} from 'moonsharp-luaparse'
 export type RequireExpression = CallExpression | StringCallExpression
 
 export function reverseTraverse(node: Node, callback: (node: Node) => boolean | undefined): boolean {
-	const anyNode = node as any
-	const children = anyNode.body
-		|| anyNode.clauses
-		|| anyNode.init
-		|| (anyNode.expression ? [anyNode.expression] : [])
-
-	for (let i = children.length - 1; i >= 0; i--) {
-		if (reverseTraverse(children[i], callback)) {
-			return true
+	for (const property of Object.values(node)) {
+		if (typeof property === 'object') {
+			if (property instanceof Array && property.length > 0 && property[0].type) {
+				for (let i = property.length - 1; i >= 0; i--) {
+					if (reverseTraverse(property[i], callback)) {
+						return true
+					}
+				}
+			} else if (property.type) {
+				if (reverseTraverse(property, callback)) {
+					return true
+				}
+			}
 		}
 	}
 
-	callback(node)
-	return false
+	return callback(node) || false
 }
 
 export function reverseTraverseRequires(node: Node, requireIdentifier: string, callback: (expression: RequireExpression) => boolean | undefined | void): void {
