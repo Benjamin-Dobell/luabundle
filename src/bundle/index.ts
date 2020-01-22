@@ -40,10 +40,14 @@ export function bundleString(lua: string, options: Options = {}): string {
 	const realizedOptions = mergeOptions(options)
 	const processedModules: ModuleMap = {}
 
-	processModule({
-		name: realizedOptions.rootModuleName,
-		content: lua,
-	}, realizedOptions, processedModules)
+	try {
+		processModule({
+			name: realizedOptions.rootModuleName,
+			content: lua,
+		}, realizedOptions, processedModules)
+	} catch (e) {
+		throw new Error(`Failed to bundle entry-point module. Caused by:\n    ${e.stack.replace(/\n/g, '\n    ')}`)
+	}
 
 	if (Object.keys(processedModules).length === 1 && !realizedOptions.force) {
 		return lua

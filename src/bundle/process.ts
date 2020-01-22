@@ -93,15 +93,19 @@ export function processModule(module: Module, options: RealizedOptions, processe
 		content: processedContent,
 	}
 
-	for (const module of resolvedModules) {
-		if (processedModules[module.name]) {
+	for (const resolvedModule of resolvedModules) {
+		if (processedModules[resolvedModule.name]) {
 			continue
 		}
 
-		const moduleContent = readFileSync(module.resolvedPath, 'utf8')
-		processModule({
-			...module,
-			content: moduleContent
-		}, options, processedModules)
+		try {
+			const moduleContent = readFileSync(resolvedModule.resolvedPath, 'utf8')
+			processModule({
+				...resolvedModule,
+				content: moduleContent
+			}, options, processedModules)
+		} catch (e) {
+			throw new Error(`Failed to bundle resolved module '${resolvedModule.name}'. Caused by:\n    ${e.stack.replace(/\n/g, '\n    ')}`)
+		}
 	}
 }

@@ -49,20 +49,14 @@ function readMetadata(lua: string): Metadata {
 			break
 		}
 
-		try {
-			const metadata = parseMetadata(line)
+		const metadata = parseMetadata(line)
 
-			if (metadata) {
-				return metadata
-			}
-		} catch (e) {
-			console.error(e.message)
-			process.exit(1)
+		if (metadata) {
+			return metadata
 		}
 	}
 
-	console.error("No metadata found. Only bundles with metadata may be unbundled")
-	process.exit(1)
+	throw new Error("No metadata found. Only bundles with metadata may be unbundled")
 }
 
 export function unbundleString(lua: string, options: Options = {}): UnbundledData {
@@ -74,8 +68,7 @@ export function unbundleString(lua: string, options: Options = {}): UnbundledDat
 	const rootModule = modules[metadata.rootModuleName]
 
 	if (!rootModule) {
-		console.error(`Bundle corrupt. Root module '${metadata.rootModuleName}' not found.`)
-		process.exit(1)
+		throw new Error(`Malformed bundle. Root module '${metadata.rootModuleName}' not found.`)
 	}
 
 	return {

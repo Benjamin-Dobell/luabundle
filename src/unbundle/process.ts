@@ -79,11 +79,15 @@ export function processModules(lua: string, metadata: RealizedMetadata, options:
 			content: extractFunctionBody(lua, body)
 		}
 
-		const processedContent = processModule(module, metadata, options)
+		try {
+			const processedContent = processModule(module, metadata, options)
 
-		if (processedContent) {
-			module.content = processedContent
-			processedModules[module.name] = module
+			if (processedContent) {
+				module.content = processedContent
+				processedModules[module.name] = module
+			}
+		} catch (e) {
+			throw new Error(`Failed to unbundle module '${module.name}'. Caused by:\n    ${e.stack.replace(/\n/g, '\n    ')}`)
 		}
 
 		if (options.rootOnly) {
