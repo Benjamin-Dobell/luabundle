@@ -10,19 +10,19 @@ import {iterateModuleRegistrations, reverseTraverseRequires} from '../ast'
 import {RealizedMetadata} from '../metadata'
 import {RealizedOptions} from './options'
 
-function extractFunctionBody(lua: string, declaration: FunctionDeclaration) {
-	if (declaration.body.length > 0) {
-		const firstStatement = declaration.body[0]
-		const lastStatement = declaration.body[declaration.body.length - 1]
-
-		// TODO: Really should submit a PR to @types/luaparse that adds in range.
-		const start = ((firstStatement as any).range as [number, number])[0]
-		const end = ((lastStatement as any).range as [number, number])[1]
-
-		return lua.substring(start, end)
+function extractModuleBody(lua: string, declaration: FunctionDeclaration) {
+	if (declaration.parameters.length > 0) {
+		throw new Error('Malformed bundle. Module function declaration unexpectedly contained parameters.')
 	}
 
-	return ''
+	// luaparse does not included comments in the body, even if you enable
+	// comment parsing. However, we don't want to remove user's comments,
+	// thus...
+
+	const start = declaration.range![0] + 'function()\n'.length
+	const end = declaration.range![1] - '\nend'.length
+
+	return lua.substring(start, end)
 }
 
 function processModule(module: Module, metadata: RealizedMetadata, options: RealizedOptions): string | null {
@@ -43,7 +43,7 @@ function processModule(module: Module, metadata: RealizedMetadata, options: Real
 	})
 
 	reverseTraverseRequires(ast, metadata.identifiers.require, expression => {
-		const range: [number, number] = (expression.base as any).range
+		const range = expression.base.range!
 		module.content = module.content.slice(0, range[0]) + 'require' + module.content.slice(range[1])
 	})
 
@@ -76,7 +76,7 @@ export function processModules(lua: string, metadata: RealizedMetadata, options:
 
 		const module: Module = {
 			name,
-			content: extractFunctionBody(lua, body)
+			content: extractModuleBody(lua, body)
 		}
 
 		try {

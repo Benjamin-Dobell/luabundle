@@ -75,7 +75,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 			}
 
 			if (typeof required === "string") {
-				const range: [number, number] = (expression as any).range
+				const range = expression.range!
 				processedContent = processedContent.slice(0, range[0]) + bundleRequire + '("' + required + '")' + processedContent.slice(range[1])
 			} else {
 				required = null
@@ -83,7 +83,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 		}
 
 		if (!required) {
-			const range: [number, number] = (expression.base as any).range
+			const range: [number, number] = expression.range!
 			processedContent = processedContent.slice(0, range[0]) + bundleRequire + processedContent.slice(range[1])
 		}
 	})
