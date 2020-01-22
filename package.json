@@ -5,11 +5,10 @@
 	"author": "Benjamin Dobell @Benjamin-Dobell",
 	"bugs": "https://github.com/Benjamin-Dobell/luabundle/issues",
 	"dependencies": {
-		"luaparse": "^0.2.1",
+		"moonsharp-luaparse": "^0.2.3",
 		"tslib": "^1"
 	},
 	"devDependencies": {
-		"@types/luaparse": "^0.2.6",
 		"@types/node": "^13.1.6",
 		"eslint": "^6.8.0",
 		"fs-extra": "^8.1.0",

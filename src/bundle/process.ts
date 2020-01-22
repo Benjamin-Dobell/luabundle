@@ -9,7 +9,7 @@ import {
 	Node,
 	parse as parseLua,
 	StringCallExpression,
-} from 'luaparse'
+} from 'moonsharp-luaparse'
 
 import {Module, ModuleMap} from '../common/module'
 

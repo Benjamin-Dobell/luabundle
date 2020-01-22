@@ -18,11 +18,6 @@
     esutils "^2.0.2"
     js-tokens "^4.0.0"
 
-"@types/luaparse@^0.2.6":
-  version "0.2.6"
-  resolved "https://registry.yarnpkg.com/@types/luaparse/-/luaparse-0.2.6.tgz#d0f25c8fac176204e75421ff7081ce482b3d7933"
-  integrity sha512-C/TORXCQgPwunpAk9ELsbOsR8fX8Vw1Y2yVdlBnC+RPA85iOT00gEZ0AxoXQRVepLwoIfWqA8t2NvnlVs0aPgw==
-
 "@types/node@^13.1.6":
   version "13.1.6"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-13.1.6.tgz#076028d0b0400be8105b89a0a55550c86684ffec"
@@ -537,11 +532,6 @@ lodash@^4.17.14, lodash@^4.17.15:
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
   integrity sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A==
 
-luaparse@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/luaparse/-/luaparse-0.2.1.tgz#aa8f56132b0de97d37f3c991a9df42e0e17f656c"
-  integrity sha1-qo9WEysN6X0388mRqd9C4OF/ZWw=
-
 mimic-fn@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/mimic-fn/-/mimic-fn-2.1.0.tgz#7ed2c2ccccaf84d3ffcb7a69b57711fc2083401b"
@@ -565,6 +555,11 @@ mkdirp@^0.5.1:
   integrity sha1-MAV0OOrGz3+MR2fzhkjWaX11yQM=
   dependencies:
     minimist "0.0.8"
+
+moonsharp-luaparse@^0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/moonsharp-luaparse/-/moonsharp-luaparse-0.2.3.tgz#f8308c22d72f315c06b5bb3a44f334551cad54a8"
+  integrity sha512-agD04/3xT32vtUpUl/ptfJqdoGGo7hJZRakMSjMxEnTm4nFnPI1ZpvoPaV5nkTe14gDxhmYlnr9cP1Kmo5RuXg==
 
 ms@^2.1.1:
   version "2.1.2"

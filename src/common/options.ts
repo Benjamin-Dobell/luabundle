@@ -1,6 +1,6 @@
 import {
 	Options as LuaparseOptions
-} from 'luaparse'
+} from 'moonsharp-luaparse'
 
 export type Identifiers = {
 	register: string,

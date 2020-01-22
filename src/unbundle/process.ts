@@ -1,7 +1,7 @@
 import {
 	FunctionDeclaration,
 	parse as parseLua,
-} from 'luaparse'
+} from 'moonsharp-luaparse'
 
 import {Module, ModuleMap} from '../common/module'
 
