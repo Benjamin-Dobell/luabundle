@@ -189,28 +189,33 @@ type ModuleMap = {
 	[name: string]: Module,
 }
 
-export type Metadata = Pick<BundleOptions, 'identifiers' | 'luaVersion' | 'rootModuleName'> & {
-	version: string
+type Module = {
+	name: string,
+	content: string,
+	start: FilePosition,
+	end: FilePosition,
+}
+
+type FilePosition = {
+	index: number,
+	line: number,
+	column: number,
 }
 ```
 
-`Metadata` is essentially a subset of the `BundleOptions` used to create a bundle, as well as `version` of luabundle used to generate the bundle.
+In addition to `name` and `content`. each module also has a `start` and `end`, which describe where the module is located within the provided bundle.
 
-`Module` is as described [above](#bundle-options).
+`Metadata` is described [below][#metadata].
 
 ## Unbundle Options
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| **postprocess** | `(module: Module, metadata: RealizedMetadata, options: RealizedOptions) => string | false | null | undefined | void` | Postprocess a module. Returning a `string` will replace the module contents. Returning `false` or `null` will reject the module i.e. it won't be added to the module map. |
-| **preprocess** | `(module: Module, metadata: RealizedMetadata, options: RealizedOptions) => string | undefined` | Preprocess a module, before luabundle makes any of its own modifications. Returning a `string` will replace the module contents. Returning `false` or `null` will reject the module i.e. it won't be added to the module map. |
 | **rootOnly** | `boolean` | `false` | When set to `true`, only the root module of the bundle will be processed and returned. |
 
 `RealizedOptions` refers to these `Options` after all default values have been merged i.e. `identifiers` is guaranteed to exist etc.
 
 `Module` is the same type encountered when [bundling](#bundle-options).
-
-`RealizedMetadata` is as follows:
 
 ### Metadata
 
@@ -219,7 +224,7 @@ Unless disabled when bundling, bundles are generated with some metadata that is 
 With the exception of `version`, these values/types correspond with the types described [#bundle-options](above). `version` is simply the version of luabundle that generated the bundle.
 
 ```typescript
-type RealizedMetadata = {
+type Metadata = {
 	identifiers: Identifiers,
 	luaVersion: string,
     rootModuleName: string,

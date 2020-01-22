@@ -11,7 +11,7 @@ import {
 import {
 	Module,
 	ModuleMap,
-} from '../common/module'
+} from './module'
 
 import {defaultOptions, Options, RealizedOptions} from './options'
 
@@ -33,7 +33,8 @@ function mergeOptions(options: Options): RealizedOptions {
 
 function bundleModule(module: Module, options: RealizedOptions) {
 	const postprocessedContent = options.postprocess ? options.postprocess(module, options) : module.content
-	return `${options.identifiers.register}("${module.name}", function()\n${postprocessedContent}\nend)\n`
+	const identifiers = options.identifiers
+	return `${identifiers.register}("${module.name}", function(require, _LOADED, ${identifiers.register}, ${identifiers.modules})\n${postprocessedContent}\nend)\n`
 }
 
 export function bundleString(lua: string, options: Options = {}): string {
@@ -62,10 +63,8 @@ export function bundleString(lua: string, options: Options = {}): string {
 		bundle += generateMetadata(realizedOptions)
 	}
 
-	if (realizedOptions.isolate) {
-		bundle += 'local require = nil\n'
-	}
-	bundle += `local ${identifiers.register}, ${identifiers.require}, ${identifiers.modules}, ${identifiers.loaded} = ${runtime}`
+	bundle += `local ${identifiers.require}, ${identifiers.loaded}, ${identifiers.register}, ${identifiers.modules} = ${runtime}`
+	bundle += realizedOptions.isolate ? '(nil)\n' : '(require)\n'
 
 	for (const [name, processedModule] of Object.entries(processedModules)) {
 		bundle += bundleModule({

@@ -27,8 +27,10 @@ function intersectionDiff<Set extends object>(a: Set, subset: RecursivePartial<S
 		const subsetValue = subset[key as keyof Subset]
 
 		if (setValue !== undefined && subsetValue !== undefined && setValue !== subsetValue) {
-			if (typeof setValue === 'object'
+			if (setValue
+				&& typeof setValue === 'object'
 				&& !(setValue instanceof Array)
+				&& subsetValue
 				&& typeof subsetValue === 'object'
 				&& !(subsetValue instanceof Array)) {
 				const recursiveDiff = intersectionDiff(
@@ -54,7 +56,7 @@ export function generateMetadata(options: BundleOptions): string {
 	return `-- Bundled by luabundle ${JSON.stringify(metadata)}\n`
 }
 
-export function parseMetadata(line: string): Metadata | null {
+function parseMetadata(line: string): Metadata | null {
 	const match = line.match(/^-- Bundled by luabundle ({.+})$/)
 
 	if (match) {
@@ -65,6 +67,25 @@ export function parseMetadata(line: string): Metadata | null {
 		}
 
 		return metadata as Metadata
+	}
+
+	return null
+}
+
+export function readMetadata(lua: string): Metadata | null {
+	// We'll allow users to inject comments and blank lines above our header, but that's it (no code).
+	for (let [start, end] = [0, lua.indexOf('\n')]; end !== -1; start = end + 1, end = lua.indexOf('\n', start)) {
+		const line = lua.substring(start, end)
+
+		if (line.length > 0 && !line.startsWith("--")) {
+			break
+		}
+
+		const metadata = parseMetadata(line)
+
+		if (metadata) {
+			return metadata
+		}
 	}
 
 	return null

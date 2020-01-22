@@ -1,4 +1,4 @@
-export {Module, ModuleMap} from './common/module'
+export {Module, ModuleMap} from './bundle/module'
 
 export {RealizedMetadata as Metadata} from './metadata'
 

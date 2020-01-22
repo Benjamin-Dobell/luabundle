@@ -11,11 +11,12 @@ import {
 	StringCallExpression,
 } from 'moonsharp-luaparse'
 
-import {Module, ModuleMap} from '../common/module'
+import {Module, ModuleMap} from './module'
 
 import {reverseTraverseRequires} from '../ast'
 
 import {RealizedOptions} from './options'
+import {readMetadata} from '../metadata'
 
 type ResolvedModule = {
 	name: string,
@@ -34,63 +35,58 @@ export function resolveModule(name: string, packagePaths: readonly string[]) {
 }
 
 export function processModule(module: Module, options: RealizedOptions, processedModules: ModuleMap): void {
-	const bundleRequire = options.identifiers.require
+	let content = options.preprocess ? options.preprocess(module, options) : module.content
+
 	const resolvedModules: ResolvedModule[] = []
 
-	const preprocessedContent = options.preprocess ? options.preprocess(module, options) : module.content
-	const ast = parseLua(preprocessedContent, {
-		locations: true,
-		luaVersion: options.luaVersion,
-		ranges: true,
-	})
+	// Ensure we don't attempt to load modules required in nested bundles
+	if (!readMetadata(content)) {
+		const ast = parseLua(content, {
+			locations: true,
+			luaVersion: options.luaVersion,
+			ranges: true,
+		})
 
-	let processedContent = preprocessedContent
+		reverseTraverseRequires(ast, expression => {
+			const argument = (expression as StringCallExpression).argument || (expression as CallExpression).arguments[0]
 
-	reverseTraverseRequires(ast, "require", expression => {
-		const argument = (expression as StringCallExpression).argument || (expression as CallExpression).arguments[0]
+			let required = null
 
-		let required = null
+			if (argument.type == 'StringLiteral') {
+				required = argument.value
+			} else if (options.expressionHandler) {
+				required = options.expressionHandler(module, argument)
+			}
 
-		if (argument.type == 'StringLiteral') {
-			required = argument.value
-		} else if (options.expressionHandler) {
-			required = options.expressionHandler(module, argument)
-		}
+			if (required) {
+				const requiredModuleNames: string[] = Array.isArray(required) ? required : [required]
 
-		if (required) {
-			const requiredModuleNames: string[] = Array.isArray(required) ? required : [required]
+				for (const requiredModule of requiredModuleNames) {
+					const resolvedPath = resolveModule(requiredModule, options.paths)
 
-			for (const requiredModule of requiredModuleNames) {
-				const resolvedPath = resolveModule(requiredModule, options.paths)
+					if (!resolvedPath) {
+						const start = expression.loc?.start!!
+						throw new Error(`Could not resolve module '${requiredModule}' required by '${module.name}' at ${start.line}:${start.column}`)
+					}
 
-				if (!resolvedPath) {
-					const start = expression.loc?.start!!
-					throw new Error(`Could not resolve module '${requiredModule}' required by '${module.name}' at ${start.line}:${start.column}`)
+					resolvedModules.push({
+						name: requiredModule,
+						resolvedPath,
+					})
 				}
 
-				resolvedModules.push({
-					name: requiredModule,
-					resolvedPath,
-				})
+				if (typeof required === "string") {
+					const range = expression.range!
+					const baseRange = expression.base.range!
+					content = content.slice(0, baseRange[1]) + '("' + required + '")' + content.slice(range[1])
+				}
 			}
-
-			if (typeof required === "string") {
-				const range = expression.range!
-				processedContent = processedContent.slice(0, range[0]) + bundleRequire + '("' + required + '")' + processedContent.slice(range[1])
-			} else {
-				required = null
-			}
-		}
-
-		if (!required) {
-			const range: [number, number] = expression.range!
-			processedContent = processedContent.slice(0, range[0]) + bundleRequire + processedContent.slice(range[1])
-		}
-	})
+		})
+	}
 
 	processedModules[module.name] = {
 		...module,
-		content: processedContent,
+		content,
 	}
 
 	for (const resolvedModule of resolvedModules) {

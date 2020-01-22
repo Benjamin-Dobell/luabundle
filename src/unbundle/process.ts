@@ -3,65 +3,44 @@ import {
 	parse as parseLua,
 } from 'moonsharp-luaparse'
 
-import {Module, ModuleMap} from '../common/module'
+import {Module, ModuleMap} from './module'
 
-import {iterateModuleRegistrations, reverseTraverseRequires} from '../ast'
+import {iterateModuleRegistrations} from '../ast'
 
 import {RealizedMetadata} from '../metadata'
 import {RealizedOptions} from './options'
 
-function extractModuleBody(lua: string, declaration: FunctionDeclaration) {
-	if (declaration.parameters.length > 0) {
-		throw new Error('Malformed bundle. Module function declaration unexpectedly contained parameters.')
+function extractModule(lua: string, name: string, declaration: FunctionDeclaration): Module {
+	if (declaration.parameters.length !== 4) {
+		throw new Error('Malformed bundle. Module function declaration contained unexpected number of parameters.')
 	}
 
 	// luaparse does not included comments in the body, even if you enable
 	// comment parsing. However, we don't want to remove user's comments,
 	// thus...
 
-	const start = declaration.range![0] + 'function()\n'.length
-	const end = declaration.range![1] - '\nend'.length
+	const startIndex = declaration.parameters[3].range![1] + ')\n'.length
+	const endIndex = declaration.range![1] - '\nend'.length
+	const content = lua.substring(startIndex, endIndex)
 
-	return lua.substring(start, end)
-}
-
-function processModule(module: Module, metadata: RealizedMetadata, options: RealizedOptions): string | null {
-	if (options.preprocess) {
-		const preprocessResult = options.preprocess(module, metadata, options)
-
-		if (preprocessResult) {
-			module.content = preprocessResult
-		} else if (preprocessResult === false) {
-			return null
+	return {
+		name,
+		content,
+		start: {
+			index: startIndex,
+			line: declaration.loc!.start.line + 1,
+			column: 0,
+		},
+		end: {
+			index: endIndex,
+			line: declaration.loc!.end.line - 1,
+			column: content.length - content.lastIndexOf('\n') - 1
 		}
 	}
-
-	const ast = parseLua(module.content, {
-		locations: true,
-		luaVersion: metadata.luaVersion,
-		ranges: true,
-	})
-
-	reverseTraverseRequires(ast, metadata.identifiers.require, expression => {
-		const range = expression.base.range!
-		module.content = module.content.slice(0, range[0]) + 'require' + module.content.slice(range[1])
-	})
-
-	if (options.postprocess) {
-		const postprocessResult = options.postprocess(module, metadata, options)
-
-		if (postprocessResult) {
-			module.content = postprocessResult
-		} else if (postprocessResult === false) {
-			return null
-		}
-	}
-
-	return module.content
 }
 
 export function processModules(lua: string, metadata: RealizedMetadata, options: RealizedOptions): ModuleMap {
-	const processedModules: ModuleMap = {}
+	const modules: ModuleMap = {}
 
 	const ast = parseLua(lua, {
 		locations: true,
@@ -74,26 +53,12 @@ export function processModules(lua: string, metadata: RealizedMetadata, options:
 			return
 		}
 
-		const module: Module = {
-			name,
-			content: extractModuleBody(lua, body)
-		}
-
-		try {
-			const processedContent = processModule(module, metadata, options)
-
-			if (processedContent) {
-				module.content = processedContent
-				processedModules[module.name] = module
-			}
-		} catch (e) {
-			throw new Error(`Failed to unbundle module '${module.name}'. Caused by:\n    ${e.stack.replace(/\n/g, '\n    ')}`)
-		}
+		modules[name] = extractModule(lua, name, body)
 
 		if (options.rootOnly) {
 			return true
 		}
 	})
 
-	return processedModules
+	return modules
 }

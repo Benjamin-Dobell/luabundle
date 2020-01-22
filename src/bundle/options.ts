@@ -1,6 +1,6 @@
 import {Expression} from 'moonsharp-luaparse'
 
-import {Module} from '../common/module'
+import {Module} from './module'
 import {Identifiers, LuaVersion} from '../common/options'
 import {RecursiveMutable, RecursivePartial, RecursiveReadonly} from '../common/utility'
 

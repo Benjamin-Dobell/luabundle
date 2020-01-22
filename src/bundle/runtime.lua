@@ -1,17 +1,19 @@
-(function()
-	local globalRequire = require
+(function(superRequire)
 	local loadingPlaceholder = {[{}] = true}
 
+	local register
 	local modules = {}
+
+	local require
 	local loaded = {}
 
-	local function register(name, body)
+	register = function(name, body)
 		if not modules[name] then
 			modules[name] = body
 		end
 	end
 
-	local function require(name)
+	require = function(name)
 		local loadedModule = loaded[name]
 
 		if loadedModule then
@@ -20,19 +22,19 @@
 			end
 		else
 			if not modules[name] then
-				if not globalRequire then
+				if not superRequire then
 					error('Tried to require \"' .. name .. '\", but no such module has been registered')
 				else
-					return globalRequire(name)
+					return superRequire(name)
 				end
 			end
 
 			loaded[name] = loadingPlaceholder
-			loaded[name] = modules[name]()
+			loaded[name] = modules[name](require, loaded, register, modules)
 		end
 
 		return loadedModule
 	end
 
-	return register, require, modules, loaded
-end)()
+	return require, loaded, register, modules
+end)

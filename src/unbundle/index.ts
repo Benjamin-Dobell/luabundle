@@ -4,9 +4,9 @@ import {
 	readFileSync,
 } from 'fs'
 
-import {ModuleMap} from '../common/module'
+import {ModuleMap} from './module'
 
-import {defaultMetadata, Metadata, parseMetadata, RealizedMetadata} from '../metadata'
+import {defaultMetadata, Metadata, readMetadata, RealizedMetadata} from '../metadata'
 import {Options, RealizedOptions} from './options'
 
 import {
@@ -40,39 +40,25 @@ function mergeMetadata(metadata: Metadata): RealizedMetadata {
 	} as RealizedMetadata
 }
 
-function readMetadata(lua: string): Metadata {
-	// We'll allow users to inject comments and blank lines above our header, but that's it (no code).
-	for (let [start, end] = [0, lua.indexOf('\n')]; end !== -1; start = end + 1, end = lua.indexOf('\n', start)) {
-		const line = lua.substring(start, end)
+export function unbundleString(lua: string, options: Options = {}): UnbundledData {
+	const metadata = readMetadata(lua)
 
-		if (line.length > 0 && !line.startsWith("--")) {
-			break
-		}
-
-		const metadata = parseMetadata(line)
-
-		if (metadata) {
-			return metadata
-		}
+	if (!metadata) {
+		throw new Error('No metadata found. Only bundles with metadata may be unbundled')
 	}
 
-	throw new Error("No metadata found. Only bundles with metadata may be unbundled")
-}
-
-export function unbundleString(lua: string, options: Options = {}): UnbundledData {
 	const realizedOptions = mergeOptions(options)
-	const metadata = mergeMetadata(readMetadata(lua))
+	const realizedMetadata = mergeMetadata(metadata)
 
-	const modules = processModules(lua, metadata, realizedOptions)
-
-	const rootModule = modules[metadata.rootModuleName]
+	const modules = processModules(lua, realizedMetadata, realizedOptions)
+	const rootModule = modules[realizedMetadata.rootModuleName]
 
 	if (!rootModule) {
-		throw new Error(`Malformed bundle. Root module '${metadata.rootModuleName}' not found.`)
+		throw new Error(`Malformed bundle. Root module '${realizedMetadata.rootModuleName}' not found.`)
 	}
 
 	return {
-		metadata,
+		metadata: realizedMetadata,
 		modules,
 	}
 }
