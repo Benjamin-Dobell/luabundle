@@ -39,7 +39,7 @@ If you're using TypeScript, TS definitions are available by default.
 
 # Bundling
 
-In order to create a bundle, and referenced files will be loaded from disk. However, the root module (entry-point Lua) may be provided either as a file path (`bundle`), or as a string (`bundleString`).
+In order to create a bundle, any referenced files will be loaded from disk. However, the root module (entry-point Lua) may be provided either as a file path (`bundle`), or as a string (`bundleString`).
 
 ## bundle(inputFilePath: string, options: BundleOptions) => string
 
@@ -92,7 +92,7 @@ The default behaviour (`paths` option omitted) is to resolve module names relati
 type ExpressionHandler = (module: Module, expression: Expression) => string | string[] | null | undefined | void
 ```
 
-`Expression` is a [luaparse](https://github.com/fstirlitz/luaparse) expression.
+`Expression` is a [moonsharp-luaparse](https://github.com/Benjamin-Dobell/moonsharp-luaparse) expression.
 
 `Module` is as described [above](#bundle-options).
 
@@ -102,11 +102,7 @@ By default, luabundle can only resolve string literal requires. When a `require(
 require(someVariable)
 ```
 
-then luabundle cannot resolve this unassisted. `require` will simply be replaced with `__bundle_require` (or the value of `options.identifiers.required`), resulting in something like:
-
-```lua
-__bundle_require(someVariable)
-```
+then luabundle cannot determine which modules may be dynamically required, thus the `require` call is simply ignored.
 
 This will work just fine at runtime _if_ `someVariable` refers to a module that's in the bundle. However, luabundle doesn't _know_ which modules it should add to bundle, and by default won't add any (for this `require()` call).
 
@@ -116,10 +112,10 @@ The simplest way to handle this situation is just to log a warning e.g.
 import bundle from 'luabundle'
 
 const bundledLua = bundle('./file.lua', {
-    expressionHandler: (module, expression) => {
-        const start = expression.loc.start
-        console.warn(`WARNING: Non-literal require found in '${module.name}' at ${start.line}:${start.column}`)
-    },
+	expressionHandler: (module, expression) => {
+		const start = expression.loc.start
+		console.warn(`WARNING: Non-literal require found in '${module.name}' at ${start.line}:${start.column}`)
+	},
 })
 ```
 
@@ -133,7 +129,7 @@ const bundledLua = bundle('./file.lua', {
 })
 ```
 
-In this case the generated `__bundle_require()` won't be altered, _however_ luabundle will simply resolve `moduleA` and `moduleB`, and ensure they're included in the bundle.
+In this case the generated `require()` call won't be altered in any way, _however_ luabundle will simply resolve `moduleA` and `moduleB` and add them to the bundle.
 
 Alternatively, if a module name is returned as a `string` (_not_ a `string[]`), luabundle will substitute out the dynamic expression for a string literal, resolve the module, and ensure it's included in the bundle.
 
@@ -152,16 +148,14 @@ type Identifiers = {
 
 Generated bundles contain a few `local` scoped identifiers which are accessible as upvalues throughout the entire bundle (i.e. in every module).
 
-Most importantly, `require` calls in all bundled modules have been replaced with calls to our bundle's require implementation, by default it's called `__bundle_require`.
-
-If at runtime you want to get a list of all modules included in the bundle, you can iterate through the keys in "modules table", by default accessible as `__bundle_modules`.
-
 | Identifier | Default |
 |---|---|
 | **register** | `"__bundle_register"` |
 | **require** | `"__bundle_require"` |
 | **modules** | `"__bundle_modules"` |
 | **loaded** | `"__bundle_loaded"` |
+
+If for example, at runtime you want to get a list of all modules included in the bundle, you can iterate through the keys in "modules table", by default accessible as `__bundle_modules`.
 
 # Unbundling
 
@@ -205,7 +199,7 @@ type FilePosition = {
 
 In addition to `name` and `content`. each module also has a `start` and `end`, which describe where the module is located within the provided bundle.
 
-`Metadata` is described [below][#metadata].
+`Metadata` is described [below](#metadata).
 
 ## Unbundle Options
 
@@ -221,13 +215,13 @@ In addition to `name` and `content`. each module also has a `start` and `end`, w
 
 Unless disabled when bundling, bundles are generated with some metadata that is necessary to unbundle.
 
-With the exception of `version`, these values/types correspond with the types described [#bundle-options](above). `version` is simply the version of luabundle that generated the bundle.
+With the exception of `version`, these values/types correspond with the types described [above](#bundle-options). `version` is simply the version of luabundle that generated the bundle.
 
 ```typescript
 type Metadata = {
 	identifiers: Identifiers,
 	luaVersion: string,
-    rootModuleName: string,
+	rootModuleName: string,
 	version: string,
 }
 ```
