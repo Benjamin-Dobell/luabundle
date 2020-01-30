@@ -23,14 +23,16 @@
 		else
 			if not modules[name] then
 				if not superRequire then
-					error('Tried to require \"' .. name .. '\", but no such module has been registered')
+					local identifier = type(name) == 'string' and '\"' .. name .. '\"' or tostring(name)
+					error('Tried to require ' .. identifier .. ', but no such module has been registered')
 				else
 					return superRequire(name)
 				end
 			end
 
 			loaded[name] = loadingPlaceholder
-			loaded[name] = modules[name](require, loaded, register, modules)
+			loadedModule = modules[name](require, loaded, register, modules)
+			loaded[name] = loadedModule
 		end
 
 		return loadedModule
