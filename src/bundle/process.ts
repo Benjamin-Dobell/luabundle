@@ -18,6 +18,9 @@ import {reverseTraverseRequires} from '../ast'
 import {RealizedOptions} from './options'
 import {readMetadata} from '../metadata'
 
+import ModuleBundlingError from '../errors/ModuleBundlingError'
+import ModuleResolutionError from '../errors/ModuleResolutionError'
+
 type ResolvedModule = {
 	name: string,
 	resolvedPath: string,
@@ -41,7 +44,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 
 	// Ensure we don't attempt to load modules required in nested bundles
 	if (!readMetadata(content)) {
-		const ast = parseLua(content, {
+		let ast = parseLua(content, {
 			locations: true,
 			luaVersion: options.luaVersion,
 			ranges: true,
@@ -66,7 +69,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 
 					if (!resolvedPath) {
 						const start = expression.loc?.start!!
-						throw new Error(`Could not resolve module '${requiredModule}' required by '${module.name}' at ${start.line}:${start.column}`)
+						throw new ModuleResolutionError(requiredModule, module.name, start.line, start.column)
 					}
 
 					resolvedModules.push({
@@ -101,7 +104,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 				content: moduleContent
 			}, options, processedModules)
 		} catch (e) {
-			throw new Error(`Failed to bundle resolved module '${resolvedModule.name}'. Caused by:\n    ${e.stack.replace(/\n/g, '\n    ')}`)
+			throw new ModuleBundlingError(resolvedModule.name, e)
 		}
 	}
 }

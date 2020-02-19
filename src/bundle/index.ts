@@ -1,8 +1,4 @@
-import {
-	existsSync,
-	lstatSync,
-	readFileSync,
-} from 'fs'
+import {readFileSync} from 'fs'
 
 import {
 	resolve as resolvePath,
@@ -15,9 +11,7 @@ import {
 
 import {defaultOptions, Options, RealizedOptions} from './options'
 
-import {
-	processModule,
-} from './process'
+import {processModule} from './process'
 import {generateMetadata} from '../metadata'
 
 function mergeOptions(options: Options): RealizedOptions {
@@ -41,14 +35,10 @@ export function bundleString(lua: string, options: Options = {}): string {
 	const realizedOptions = mergeOptions(options)
 	const processedModules: ModuleMap = {}
 
-	try {
-		processModule({
-			name: realizedOptions.rootModuleName,
-			content: lua,
-		}, realizedOptions, processedModules)
-	} catch (e) {
-		throw new Error(`Failed to bundle entry-point module. Caused by:\n    ${e.stack.replace(/\n/g, '\n    ')}`)
-	}
+	processModule({
+		name: realizedOptions.rootModuleName,
+		content: lua,
+	}, realizedOptions, processedModules)
 
 	if (Object.keys(processedModules).length === 1 && !realizedOptions.force) {
 		return lua
@@ -79,14 +69,6 @@ export function bundleString(lua: string, options: Options = {}): string {
 }
 
 export function bundle(inputFilePath: string, options: Options = {}): string {
-	if (!existsSync(inputFilePath)) {
-		throw new Error(inputFilePath + ' could not be found')
-	}
-
-	if (!lstatSync(inputFilePath).isFile()) {
-		throw new Error(inputFilePath + ' is not a file')
-	}
-
 	const lua = readFileSync(inputFilePath, 'utf8')
 	return bundleString(lua, options)
 }

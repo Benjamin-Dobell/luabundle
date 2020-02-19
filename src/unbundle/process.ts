@@ -10,9 +10,11 @@ import {iterateModuleRegistrations} from '../ast'
 import {RealizedMetadata} from '../metadata'
 import {RealizedOptions} from './options'
 
+import MalformedBundleError from '../errors/MalformedBundleError'
+
 function extractModule(lua: string, name: string, declaration: FunctionDeclaration): Module {
 	if (declaration.parameters.length !== 4) {
-		throw new Error('Malformed bundle. Module function declaration contained unexpected number of parameters.')
+		throw new MalformedBundleError('Module function declaration contained unexpected number of parameters.')
 	}
 
 	// luaparse does not included comments in the body, even if you enable

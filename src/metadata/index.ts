@@ -4,6 +4,8 @@ import {defaultOptions as defaultBundleOptions, RealizedOptions as BundleOptions
 
 import {RecursivePartial} from '../common/utility'
 
+import MalformedBundleError from '../errors/MalformedBundleError'
+
 export type RealizedMetadata = Pick<BundleOptions, 'identifiers' | 'luaVersion' | 'rootModuleName'> & {
 	version: string
 }
@@ -63,7 +65,7 @@ function parseMetadata(line: string): Metadata | null {
 		const metadata = JSON.parse(match[1])
 
 		if (!metadata['version']) {
-			throw new Error('Bundle contains invalid metadata')
+			throw new MalformedBundleError('Bundle contains invalid metadata')
 		}
 
 		return metadata as Metadata

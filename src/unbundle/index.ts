@@ -1,17 +1,14 @@
-import {
-	existsSync,
-	lstatSync,
-	readFileSync,
-} from 'fs'
+import {readFileSync} from 'fs'
 
 import {ModuleMap} from './module'
 
 import {defaultMetadata, Metadata, readMetadata, RealizedMetadata} from '../metadata'
 import {Options, RealizedOptions} from './options'
 
-import {
-	processModules,
-} from './process'
+import {processModules} from './process'
+
+import MalformedBundleError from '../errors/MalformedBundleError'
+import NoBundleMetadataError from '../errors/NoBundleMetadataError'
 
 export type UnbundledData = {
 	metadata: RealizedMetadata,
@@ -44,7 +41,7 @@ export function unbundleString(lua: string, options: Options = {}): UnbundledDat
 	const metadata = readMetadata(lua)
 
 	if (!metadata) {
-		throw new Error('No metadata found. Only bundles with metadata may be unbundled')
+		throw new NoBundleMetadataError()
 	}
 
 	const realizedOptions = mergeOptions(options)
@@ -54,7 +51,7 @@ export function unbundleString(lua: string, options: Options = {}): UnbundledDat
 	const rootModule = modules[realizedMetadata.rootModuleName]
 
 	if (!rootModule) {
-		throw new Error(`Malformed bundle. Root module '${realizedMetadata.rootModuleName}' not found.`)
+		throw new MalformedBundleError(`Root module '${realizedMetadata.rootModuleName}' not found.`)
 	}
 
 	return {
@@ -64,14 +61,6 @@ export function unbundleString(lua: string, options: Options = {}): UnbundledDat
 }
 
 export function unbundle(inputFilePath: string, options: Options = {}): UnbundledData {
-	if (!existsSync(inputFilePath)) {
-		throw new Error(inputFilePath + ' could not be found')
-	}
-
-	if (!lstatSync(inputFilePath).isFile()) {
-		throw new Error(inputFilePath + ' is not a file')
-	}
-
 	const lua = readFileSync(inputFilePath, 'utf8')
 	return unbundleString(lua, options)
 }
