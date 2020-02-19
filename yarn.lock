@@ -556,10 +556,10 @@ mkdirp@^0.5.1:
   dependencies:
     minimist "0.0.8"
 
-moonsharp-luaparse@^0.2.3:
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/moonsharp-luaparse/-/moonsharp-luaparse-0.2.3.tgz#f8308c22d72f315c06b5bb3a44f334551cad54a8"
-  integrity sha512-agD04/3xT32vtUpUl/ptfJqdoGGo7hJZRakMSjMxEnTm4nFnPI1ZpvoPaV5nkTe14gDxhmYlnr9cP1Kmo5RuXg==
+moonsharp-luaparse@^0.2.4:
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/moonsharp-luaparse/-/moonsharp-luaparse-0.2.4.tgz#c5e640fd001bd2874d5c3bba3c853c5fc1596702"
+  integrity sha512-1bkZPHRVJhCzt681KnFxWB5fYQlmcOZuBAlzdcsdTSjDfL//sqjcH2L2bbbgxf/l5s1krpGL8Ba7twT7mdj91Q==
 
 ms@^2.1.1:
   version "2.1.2"

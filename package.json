@@ -5,7 +5,7 @@
 	"author": "Benjamin Dobell @Benjamin-Dobell",
 	"bugs": "https://github.com/Benjamin-Dobell/luabundle/issues",
 	"dependencies": {
-		"moonsharp-luaparse": "^0.2.3",
+		"moonsharp-luaparse": "^0.2.4",
 		"tslib": "^1"
 	},
 	"devDependencies": {
