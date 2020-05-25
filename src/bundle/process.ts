@@ -5,6 +5,10 @@ import {
 } from 'fs'
 
 import {
+	sep as pathSeparator
+} from 'path'
+
+import {
 	CallExpression,
 	Node,
 	parse as parseLua,
@@ -27,8 +31,10 @@ type ResolvedModule = {
 }
 
 export function resolveModule(name: string, packagePaths: readonly string[]) {
+	const platformName = name.replace(/\./g, pathSeparator)
+
 	for (const pattern of packagePaths) {
-		const path = pattern.replace(/\?/g, name)
+		const path = pattern.replace(/\?/g, platformName)
 
 		if (existsSync(path) && lstatSync(path).isFile()) {
 			return path
