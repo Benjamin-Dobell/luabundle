@@ -39,6 +39,12 @@ export function resolveModule(name: string, packagePaths: readonly string[]) {
 		if (existsSync(path) && lstatSync(path).isFile()) {
 			return path
 		}
+
+		const initPath = pattern.replace(/\?/g, `${platformName}/init`)
+
+		if (existsSync(initPath) && lstatSync(initPath).isFile()) {
+			return initPath
+		}
 	}
 	return null
 }
