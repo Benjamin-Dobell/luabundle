@@ -31,13 +31,14 @@ function bundleModule(module: Module, options: RealizedOptions) {
 	return `${identifiers.register}("${module.name}", function(require, _LOADED, ${identifiers.register}, ${identifiers.modules})\n${postprocessedContent}\nend)\n`
 }
 
-export function bundleString(lua: string, options: Options = {}): string {
+export function bundleString(lua: string, options: Options = {}, inputFilePath: string): string {
 	const realizedOptions = mergeOptions(options)
 	const processedModules: ModuleMap = {}
 
 	processModule({
 		name: realizedOptions.rootModuleName,
 		content: lua,
+		resolvedPath: inputFilePath
 	}, realizedOptions, processedModules)
 
 	if (Object.keys(processedModules).length === 1 && !realizedOptions.force) {
@@ -70,5 +71,5 @@ export function bundleString(lua: string, options: Options = {}): string {
 
 export function bundle(inputFilePath: string, options: Options = {}): string {
 	const lua = readFileSync(inputFilePath, 'utf8')
-	return bundleString(lua, options)
+	return bundleString(lua, options, inputFilePath)
 }

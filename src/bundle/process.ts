@@ -5,7 +5,10 @@ import {
 } from 'fs'
 
 import {
-	sep as pathSeparator
+	sep as pathSeparator,
+	resolve,
+	dirname,
+	isAbsolute
 } from 'path'
 
 import {
@@ -30,11 +33,15 @@ type ResolvedModule = {
 	resolvedPath: string,
 }
 
-export function resolveModule(name: string, packagePaths: readonly string[]) {
+export function resolveModule(basePath: string | undefined, name: string, packagePaths: readonly string[]) {
 	const platformName = name.replace(/\./g, pathSeparator)
 
 	for (const pattern of packagePaths) {
-		const path = pattern.replace(/\?/g, platformName)
+		let path = pattern.replace(/\?/g, platformName)
+
+		if (basePath && !isAbsolute(path)) {
+			path = resolve(dirname(basePath), path)
+		}
 
 		if (existsSync(path) && lstatSync(path).isFile()) {
 			return path
@@ -71,7 +78,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 				const requiredModuleNames: string[] = Array.isArray(required) ? required : [required]
 
 				for (const requiredModule of requiredModuleNames) {
-					const resolvedPath = resolveModule(requiredModule, options.paths)
+					const resolvedPath = resolveModule(module.resolvedPath, requiredModule, options.paths)
 
 					if (!resolvedPath) {
 						const start = expression.loc?.start!!
