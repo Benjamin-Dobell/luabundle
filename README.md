@@ -29,7 +29,7 @@ npm install --save luabundle
 # Usage
 
 ```js
-import bundle from 'luabundle'
+import { bundle } from 'luabundle'
 
 const bundledLua = bundle('./file.lua')
 // `bundledLua` now contains valid Lua which can be written straight to disk, stdout etc.
