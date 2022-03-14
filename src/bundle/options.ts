@@ -6,6 +6,7 @@ import {RecursiveMutable, RecursivePartial, RecursiveReadonly} from '../common/u
 
 export type ExpressionHandler = (module: Module, expression: Expression) => string | string[] | null | undefined | void
 export type Process = (module: Module, options: RealizedOptions) => string
+export type IgnoredModules = readonly (string | RegExp)[]
 
 export type RealizedOptions = RecursiveReadonly<{
 	expressionHandler?: ExpressionHandler,
@@ -18,6 +19,7 @@ export type RealizedOptions = RecursiveReadonly<{
 	postprocess?: Process,
 	preprocess?: Process,
 	rootModuleName: string,
+	ignoredModules: IgnoredModules
 }>
 
 export type Options = RecursiveMutable<RecursivePartial<RealizedOptions>>
@@ -35,4 +37,5 @@ export const defaultOptions: RealizedOptions = {
 	metadata: true,
 	paths: ['?', '?.lua'],
 	rootModuleName: '__root',
+	ignoredModules: [],
 } as const

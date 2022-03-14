@@ -63,6 +63,7 @@ Loads all modules `require()`d in the provided Lua string, and returns the resul
 | **postprocess** | `(module: Module, options: RealizedOptions) => string` | `undefined` | Postprocess a module, immediately before its added to the bundle.  |
 | **preprocess** | `(module: Module, options: RealizedOptions) => string` | `undefined` | Preprocess a module, before luabundle makes any of its own modifications.  |
 | **rootModuleName** | `string` | `"__root"` | The contents of `inputFilePath` are interpreted as module with this name.  |
+| **ignoredModules** | `(string | RegExp)[]` | `[]` |  A list of module names that will be ignored during bundling. Regular expressions may be used to pattern match against the module name  |
 
 `RealizedOptions` refers to these `Options` after all default values have been merged i.e. `identifiers` is guaranteed to exist etc.
 

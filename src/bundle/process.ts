@@ -19,7 +19,7 @@ import {Module, ModuleMap} from './module'
 
 import {reverseTraverseRequires} from '../ast'
 
-import {RealizedOptions} from './options'
+import {IgnoredModules, RealizedOptions} from './options'
 import {readMetadata} from '../metadata'
 
 import ModuleBundlingError from '../errors/ModuleBundlingError'
@@ -41,6 +41,12 @@ export function resolveModule(name: string, packagePaths: readonly string[]) {
 		}
 	}
 	return null
+}
+
+export function isIgnoredModule(name: string, ignoredModules: IgnoredModules): boolean {
+	return ignoredModules.some(pattern => {
+		return typeof pattern == 'string' ? pattern === name : pattern.test(name)
+	})
 }
 
 export function processModule(module: Module, options: RealizedOptions, processedModules: ModuleMap): void {
@@ -71,6 +77,10 @@ export function processModule(module: Module, options: RealizedOptions, processe
 				const requiredModuleNames: string[] = Array.isArray(required) ? required : [required]
 
 				for (const requiredModule of requiredModuleNames) {
+					if (isIgnoredModule(requiredModule, options.ignoredModules)) {
+						continue
+					}
+
 					const resolvedPath = resolveModule(requiredModule, options.paths)
 
 					if (!resolvedPath) {
