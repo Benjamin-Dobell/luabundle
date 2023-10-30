@@ -1,7 +1,7 @@
 {
 	"name": "luabundle",
 	"description": "Bundles several Lua files into a single file.",
-	"version": "1.6.0",
+	"version": "1.7.0",
 	"author": "Benjamin Dobell @Benjamin-Dobell",
 	"bugs": "https://github.com/Benjamin-Dobell/luabundle/issues",
 	"dependencies": {

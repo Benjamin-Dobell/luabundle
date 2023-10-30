@@ -71,11 +71,17 @@ export function processModule(module: Module, options: RealizedOptions, processe
 				const requiredModuleNames: string[] = Array.isArray(required) ? required : [required]
 
 				for (const requiredModule of requiredModuleNames) {
-					const resolvedPath = resolveModule(requiredModule, options.paths)
+					const resolvedPath = options.resolveModule
+						? options.resolveModule(requiredModule, options.paths)
+						: resolveModule(requiredModule, options.paths)
 
 					if (!resolvedPath) {
-						const start = expression.loc?.start!!
-						throw new ModuleResolutionError(requiredModule, module.name, start.line, start.column)
+						if (!options.builtModules.includes(requiredModule)) {
+							const start = expression.loc?.start!!
+							throw new ModuleResolutionError(requiredModule, module.name, start.line, start.column)
+                        } else {
+                            continue
+                        }
 					}
 
 					resolvedModules.push({
@@ -110,7 +116,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 				content: moduleContent
 			}, options, processedModules)
 		} catch (e) {
-			throw new ModuleBundlingError(resolvedModule.name, e)
+			throw new ModuleBundlingError(resolvedModule.name, e as Error)
 		}
 	}
 }
