@@ -4,15 +4,15 @@ const process = require('process')
 
 const fs = require('fs-extra')
 const klawSync = require('klaw-sync')
-const rimraf = require('rimraf')
+const { rimrafSync } = require('rimraf')
 
 const copy = require('./utils/copy')
 const {dist, root} = require('./utils/paths')
 
-rimraf.sync(dist('*'), {glob: {dot: true}})
+rimrafSync(dist('*'), {glob: {dot: true}})
 
 if (fs.existsSync(root('gen'))) {
-	rimraf.sync(root('gen/*'), {glob: {dot: true}})
+	rimrafSync(root('gen/*'), {glob: {dot: true}})
 } else {
 	fs.mkdirSync(root('gen'))
 }
@@ -30,8 +30,8 @@ function relocateJs() {
 		fs.writeFileSync(item.path, content.replace(sourceRegex, (_, prefix, suffix) => prefix + suffix))
 	}
 
-	fs.copySync(dist('src/'), dist())
-	rimraf.sync(dist('src'))
+	fs.copySync(dist('src'), dist())
+	rimrafSync(dist('src'))
 }
 
 const tsc = root('node_modules', '.bin', 'tsc')
@@ -40,7 +40,7 @@ spawn(tsc, ['-b'], { stdio: 'inherit' }).on('exit', code => {
 		process.exit(code)
 	}
 
-	rimraf.sync(dist('gen'))
+	rimrafSync(dist('gen'))
 
 	relocateJs()
 
