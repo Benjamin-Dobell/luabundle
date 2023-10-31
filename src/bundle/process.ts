@@ -76,7 +76,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 						: resolveModule(requiredModule, options.paths)
 
 					if (!resolvedPath) {
-						if (!options.builtModules.includes(requiredModule)) {
+						if (!options.ignoredModuleNames.includes(requiredModule)) {
 							const start = expression.loc?.start!!
 							throw new ModuleResolutionError(requiredModule, module.name, start.line, start.column)
                         } else {

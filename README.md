@@ -63,7 +63,7 @@ Loads all modules `require()`d in the provided Lua string, and returns the resul
 | **postprocess** | `(module: Module, options: RealizedOptions) => string` | `undefined` | Postprocess a module, immediately before its added to the bundle.  |
 | **preprocess** | `(module: Module, options: RealizedOptions) => string` | `undefined` | Preprocess a module, before luabundle makes any of its own modifications.  |
 | **rootModuleName** | `string` | `"__root"` | The contents of `inputFilePath` are interpreted as module with this name.  |
-| **builtModules** | `string[]` | `[]` | List of builtin modules that runtime will provide.  |
+| **ignoredModuleNames** | `string[]` | `[]` | List of modules that will be required from the runtime, suppress ModuleResolutionError.  |
 | **resolveModule** | `(name: string, packagePaths: readonly string[]) => string \| null` | `undefined` | A method that resolve the lua module to its file path.  |
 | **sourceEncoding** | `string` | `"utf8"` | Source code encoding.  |
 
@@ -162,9 +162,11 @@ If for example, at runtime you want to get a list of all modules included in the
 
 ### Resolve Module
 
-The default implement of `resolveModule` method:
+The default implementation of `resolveModule` method:
 
 ```typescript
+import { existsSync, lstatSync } from 'fs'
+import { sep as pathSeparator } from 'path'
 export function resolveModule(name: string, packagePaths: readonly string[]) {
 	const platformName = name.replace(/\./g, pathSeparator)
 
