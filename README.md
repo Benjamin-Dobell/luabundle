@@ -63,6 +63,9 @@ Loads all modules `require()`d in the provided Lua string, and returns the resul
 | **postprocess** | `(module: Module, options: RealizedOptions) => string` | `undefined` | Postprocess a module, immediately before its added to the bundle.  |
 | **preprocess** | `(module: Module, options: RealizedOptions) => string` | `undefined` | Preprocess a module, before luabundle makes any of its own modifications.  |
 | **rootModuleName** | `string` | `"__root"` | The contents of `inputFilePath` are interpreted as module with this name.  |
+| **ignoredModuleNames** | `string[]` | `[]` | List of modules that will be required from the runtime, suppress ModuleResolutionError.  |
+| **resolveModule** | `(name: string, packagePaths: readonly string[]) => string \| null` | `undefined` | A method that resolve the lua module to its file path.  |
+| **sourceEncoding** | `string` | `"utf8"` | Source code encoding.  |
 
 `RealizedOptions` refers to these `Options` after all default values have been merged i.e. `identifiers` is guaranteed to exist etc.
 
@@ -156,6 +159,27 @@ Generated bundles contain a few `local` scoped identifiers which are accessible 
 | **loaded** | `"__bundle_loaded"` |
 
 If for example, at runtime you want to get a list of all modules included in the bundle, you can iterate through the keys in "modules table", by default accessible as `__bundle_modules`.
+
+### Resolve Module
+
+The default implementation of `resolveModule` method:
+
+```typescript
+import { existsSync, lstatSync } from 'fs'
+import { sep as pathSeparator } from 'path'
+export function resolveModule(name: string, packagePaths: readonly string[]) {
+	const platformName = name.replace(/\./g, pathSeparator)
+
+	for (const pattern of packagePaths) {
+		const path = pattern.replace(/\?/g, platformName)
+
+		if (existsSync(path) && lstatSync(path).isFile()) {
+			return path
+		}
+	}
+	return null
+}
+```
 
 # Unbundling
 

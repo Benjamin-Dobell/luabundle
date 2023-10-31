@@ -18,6 +18,9 @@ export type RealizedOptions = RecursiveReadonly<{
 	postprocess?: Process,
 	preprocess?: Process,
 	rootModuleName: string,
+	ignoredModuleNames: readonly string[],
+	resolveModule: undefined | ((name: string, packagePaths: readonly string[]) => string | null),
+	sourceEncoding: BufferEncoding,
 }>
 
 export type Options = RecursiveMutable<RecursivePartial<RealizedOptions>>
@@ -35,4 +38,7 @@ export const defaultOptions: RealizedOptions = {
 	metadata: true,
 	paths: ['?', '?.lua'],
 	rootModuleName: '__root',
+	ignoredModuleNames: [],
+	resolveModule: undefined,
+	sourceEncoding: 'utf8',
 } as const
