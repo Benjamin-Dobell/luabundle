@@ -65,6 +65,7 @@ Loads all modules `require()`d in the provided Lua string, and returns the resul
 | **rootModuleName** | `string` | `"__root"` | The contents of `inputFilePath` are interpreted as module with this name.  |
 | **builtModules** | `string[]` | `[]` | List of builtin modules that runtime will provide.  |
 | **resolveModule** | `(name: string, packagePaths: readonly string[]) => string \| null` | `undefined` | A method that resolve the lua module to its file path.  |
+| **sourceEncoding** | `string` | `"utf8"` | Source code encoding.  |
 
 `RealizedOptions` refers to these `Options` after all default values have been merged i.e. `identifiers` is guaranteed to exist etc.
 

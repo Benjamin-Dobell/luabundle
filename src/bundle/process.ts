@@ -110,7 +110,7 @@ export function processModule(module: Module, options: RealizedOptions, processe
 		}
 
 		try {
-			const moduleContent = readFileSync(resolvedModule.resolvedPath, 'utf8')
+			const moduleContent = readFileSync(resolvedModule.resolvedPath, options.sourceEncoding)
 			processModule({
 				...resolvedModule,
 				content: moduleContent

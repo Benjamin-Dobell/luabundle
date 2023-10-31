@@ -45,7 +45,7 @@ export function bundleString(lua: string, options: Options = {}): string {
 	}
 
 	const identifiers = realizedOptions.identifiers
-	const runtime = readFileSync(resolvePath(__dirname, './runtime.lua'))
+	const runtime = readFileSync(resolvePath(__dirname, './runtime.lua'), 'utf8')
 
 	let bundle = ''
 
@@ -69,6 +69,7 @@ export function bundleString(lua: string, options: Options = {}): string {
 }
 
 export function bundle(inputFilePath: string, options: Options = {}): string {
-	const lua = readFileSync(inputFilePath, 'utf8')
+	const realizedOptions = mergeOptions(options)
+	const lua = readFileSync(inputFilePath, realizedOptions.sourceEncoding)
 	return bundleString(lua, options)
 }
