@@ -35,5 +35,6 @@
 		"posttest": "eslint . --config .eslintrc",
 		"test": "echo NO TESTS"
 	},
-	"types": "index.d.ts"
+	"types": "index.d.ts",
+	"packageManager": "pnpm@9.5.0"
 }
